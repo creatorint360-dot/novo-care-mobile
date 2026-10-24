@@ -1,12 +1,12 @@
 // Novo Staff mobile app (Expo / React Native).
 // Same accounts, same database and same rules as the website: it talks to the online server.
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, AppState, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, Linking, Modal, Pressable, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, forgetTokens, hasSavedSession, setSessionEndedHandler } from './src/api';
 import { L, loadLabels } from './src/labels';
-import { Body, BrandMark, Button, C, Card, Field, Hero, Msg, Muted, PasswordField, RoleTag } from './src/ui';
+import { Body, BrandMark, Button, C, Card, Field, Hero, KeyboardScroll, Msg, Muted, PasswordField, RoleTag } from './src/ui';
 import { Audit, Backup, ChangePassword, Credentials, Dashboard, Records, Users } from './src/screens';
 
 // ------------------------------------------------------------------ step 1: username + password
@@ -145,14 +145,12 @@ function Main() {
   if (phase !== 'app') {
     return (
       <View style={shellStyle}>
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 22, paddingBottom: 40 }}>
+        <KeyboardScroll padding={22}>
             <Hero />
             {phase === 'login' ? <Login key={note} note={note} onNext={() => setPhase('twofa')} /> : null}
             {phase === 'twofa' ? <TwoFactor onDone={enterApp} onBack={(t) => backToLogin(t)} /> : null}
             <Muted style={{ marginTop: 26, textAlign: 'center' }}>Computer Security - PBIT 309 / PBSE 309</Muted>
-          </ScrollView>
-        </KeyboardAvoidingView>
+        </KeyboardScroll>
         <StatusBar style="dark" />
       </View>
     );
@@ -192,12 +190,10 @@ function Main() {
         </View>
         <Button small kind="ghost" title="Menu" onPress={() => setMenuOpen(true)} testID="menu-open" />
       </View>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
+      <KeyboardScroll padding={16}>
           {me.demoMode ? <Msg kind="warn" text="Demo mode is ON: salt, pepper and their combination are visible in the database for the lecturer. Turn DEMO_MODE off after the demonstration." /> : null}
           <View key={screen}>{body}</View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardScroll>
 
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(42,35,66,0.45)' }} onPress={() => setMenuOpen(false)}>

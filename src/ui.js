@@ -1,6 +1,6 @@
 // Small building blocks shared by every screen.
-import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, ActivityIndicator, Alert, Platform } from 'react-native';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { View, Text, TextInput, Pressable, ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { L, roleName } from './labels';
 
@@ -94,7 +94,61 @@ export function Button({ title, onPress, kind = 'primary', disabled, busy, small
   );
 }
 
-export function Field({ label, style, ...props }) {
+// ---- keeping typing boxes visible above the keyboard ----
+// Newer Android versions draw the app under the keyboard instead of shrinking it, so the page
+// must make room itself: it adds space equal to the keyboard height (so it can scroll), and the
+// box you are typing in is scrolled up into view. On iPhone the standard "padding" behaviour
+// does the job.
+const RevealContext = createContext(null);
+
+export function KeyboardScroll({ children, padding = 16 }) {
+  const ref = useRef(null);
+  const [keyboard, setKeyboard] = useState(0);
+
+  // Scroll so that the box that has the cursor sits near the top of the visible part.
+  const reveal = useCallback(() => {
+    try {
+      const view = ref.current;
+      const input = TextInput.State && TextInput.State.currentlyFocusedInput ? TextInput.State.currentlyFocusedInput() : null;
+      const inner = view && view.getInnerViewRef ? view.getInnerViewRef() : null;
+      if (!view || !input || !inner) return;
+      input.measureLayout(inner, (x, y) => view.scrollTo({ y: Math.max(0, y - 140), animated: true }), () => {});
+    } catch (err) { /* the page can still be scrolled by hand */ }
+  }, []);
+
+  useEffect(() => {
+    const ios = Platform.OS === 'ios';
+    const show = Keyboard.addListener(ios ? 'keyboardWillShow' : 'keyboardDidShow', (e) => {
+      setKeyboard(e.endCoordinates ? e.endCoordinates.height : 0);
+      setTimeout(reveal, 250);          // after the extra space has been added
+    });
+    const hide = Keyboard.addListener(ios ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboard(0));
+    return () => { show.remove(); hide.remove(); };
+  }, [reveal]);
+
+  const body = (
+    <RevealContext.Provider value={reveal}>
+      <ScrollView ref={ref} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
+        contentContainerStyle={{ padding, paddingBottom: 60 + (Platform.OS === 'android' ? keyboard : 0) }}>
+        {children}
+      </ScrollView>
+    </RevealContext.Provider>
+  );
+  if (Platform.OS === 'ios') return <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">{body}</KeyboardAvoidingView>;
+  return <View style={{ flex: 1 }}>{body}</View>;
+}
+
+// An onFocus handler for typing boxes: moving from one box to the next scrolls it into view too.
+function useEnsureVisible(userOnFocus) {
+  const reveal = useContext(RevealContext);
+  return (e) => {
+    if (userOnFocus) userOnFocus(e);
+    if (reveal) setTimeout(reveal, 150);
+  };
+}
+
+export function Field({ label, style, onFocus: userOnFocus, ...props }) {
+  const onFocus = useEnsureVisible(userOnFocus);
   return (
     <View style={{ marginTop: 12 }}>
       <Text style={{ fontWeight: '600', fontSize: 13, color: C.ink, marginBottom: 6 }}>{label}</Text>
@@ -105,6 +159,7 @@ export function Field({ label, style, ...props }) {
         autoComplete="off"
         importantForAutofill="no"
         {...props}
+        onFocus={onFocus}
         style={[{ borderWidth: 1.5, borderColor: C.line, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: C.ink, backgroundColor: '#fff' }, props.multiline ? { minHeight: 100, textAlignVertical: 'top' } : null, style]}
       />
     </View>
@@ -112,8 +167,9 @@ export function Field({ label, style, ...props }) {
 }
 
 // A password box with a Show / Hide button.
-export function PasswordField({ label, ...props }) {
+export function PasswordField({ label, onFocus: userOnFocus, ...props }) {
   const [shown, setShown] = useState(false);
+  const onFocus = useEnsureVisible(userOnFocus);
   return (
     <View style={{ marginTop: 12 }}>
       <Text style={{ fontWeight: '600', fontSize: 13, color: C.ink, marginBottom: 6 }}>{label}</Text>
@@ -125,6 +181,7 @@ export function PasswordField({ label, ...props }) {
           autoComplete="off"
           importantForAutofill="no"
           {...props}
+          onFocus={onFocus}
           secureTextEntry={!shown}
           style={{ borderWidth: 1.5, borderColor: C.line, borderRadius: 12, paddingLeft: 14, paddingRight: 70, paddingVertical: 11, fontSize: 15, color: C.ink, backgroundColor: '#fff' }}
         />

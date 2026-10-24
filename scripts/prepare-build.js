@@ -114,13 +114,13 @@ for (const [name, size, radius, scale, mode] of icons) {
 const appPath = path.join(ROOT, 'app.json');
 const app = JSON.parse(fs.readFileSync(appPath, 'utf8'));
 app.expo = app.expo || {};
-app.expo.name = 'Novo Staff';
+app.expo.name = 'Novo Care';
 app.expo.android = app.expo.android || {};
 app.expo.android.package = 'com.novostaff.app';
 app.expo.ios = app.expo.ios || {};
 app.expo.ios.bundleIdentifier = 'com.novostaff.app';
 fs.writeFileSync(appPath, JSON.stringify(app, null, 2) + '\n');
-console.log('updated app.json (name Novo Staff, package com.novostaff.app)');
+console.log('updated app.json (name Novo Care, package com.novostaff.app)');
 
 // ---- 3. eas.json: a "preview" build that makes an installable .apk ----
 const easPath = path.join(ROOT, 'eas.json');

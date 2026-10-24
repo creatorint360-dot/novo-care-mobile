@@ -5,6 +5,7 @@ import { ActivityIndicator, AppState, KeyboardAvoidingView, Linking, Modal, Plat
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, forgetTokens, hasSavedSession, setSessionEndedHandler } from './src/api';
+import { L, loadLabels } from './src/labels';
 import { Body, BrandMark, Button, C, Card, Field, Hero, Msg, Muted, PasswordField, RoleTag } from './src/ui';
 import { Audit, Backup, ChangePassword, Credentials, Dashboard, Records, Users } from './src/screens';
 
@@ -118,6 +119,7 @@ function Main() {
   useEffect(() => {
     setSessionEndedHandler(() => { setMe(null); setMenuOpen(false); setNote('Your session ended. Please sign in again.'); setPhase('login'); });
     (async () => {
+      await loadLabels();
       if (await hasSavedSession()) return enterApp();
       setPhase('login');
     })();
@@ -157,7 +159,7 @@ function Main() {
   }
 
   const a = me.abilities;
-  const items = [['dashboard', 'Dashboard'], ['records', 'Records']];
+  const items = [['dashboard', 'Dashboard'], ['records', L.Records]];
   if (a.creatableRoles.length || a.canDeleteInputters) items.push(['users', 'Users']);
   if (a.canViewAudit) items.push(['audit', 'Audit log']);
   if (a.canBackup) items.push(['backup', 'Backup']);

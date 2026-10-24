@@ -3,14 +3,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text } from 'react-native';
 import { api } from './api';
+import { L, roleName } from './labels';
 import { Body, Button, Card, Chip, Field, Msg, Muted, PasswordField, RoleTag, C, confirmAction, fmt } from './ui';
 
-const ABILITY_TEXT = {
-  inputter: ['Add staff records', 'See and delete only your own records', 'Change your password'],
-  manager: ["Add staff records and see everyone's", 'Create Inputter accounts', 'Back up the data', 'Delete only your own records'],
-  admin: ['See every record and delete any of them', 'View and delete Inputter accounts', 'Back up the data', 'Cannot create accounts or read the audit log'],
-  administrator: ['Full control of the system', 'Create Inputters, Managers and Admins', 'Unlock accounts, reset 2FA, read the audit log', 'Back up, restore and reset the records'],
-};
 
 // ------------------------------------------------------------------ dashboard
 export function Dashboard({ me, refresh }) {
@@ -28,8 +23,8 @@ export function Dashboard({ me, refresh }) {
           </View>
         ))}
       </View>
-      <Card title={'What your role (' + me.user.role + ') can do'}>
-        {(ABILITY_TEXT[me.user.role] || []).map((t) => <Body key={t} style={{ marginBottom: 4 }}>{'\u2022 ' + t}</Body>)}
+      <Card title={'What your role (' + roleName(me.user.role) + ') can do'}>
+        {((L.abilities && L.abilities[me.user.role]) || []).map((t) => <Body key={t} style={{ marginBottom: 4 }}>{'\u2022 ' + t}</Body>)}
       </Card>
     </View>
   );
@@ -53,29 +48,29 @@ export function Records({ refresh }) {
     setBusy(true); setMsg(null);
     const r = await api('/api/records', 'POST', { title, details });
     setBusy(false);
-    if (r.ok) { setTitle(''); setDetails(''); setMsg({ kind: 'ok', text: 'Record saved (encrypted).' }); load(); refresh(); }
+    if (r.ok) { setTitle(''); setDetails(''); setMsg({ kind: 'ok', text: L.Record + ' saved (encrypted).' }); load(); refresh(); }
     else setMsg({ kind: 'error', text: r.data.error || 'Could not save.' });
   }
 
   function remove(rec) {
-    confirmAction('Delete this record?', rec.title, async () => {
+    confirmAction('Delete this ' + L.record + '?', rec.title, async () => {
       const d = await api('/api/records', 'POST', { action: 'delete', id: rec.id });
-      setMsg(d.ok ? { kind: 'ok', text: 'Record deleted.' } : { kind: 'error', text: d.data.error || 'Could not delete.' });
+      setMsg(d.ok ? { kind: 'ok', text: L.Record + ' deleted.' } : { kind: 'error', text: d.data.error || 'Could not delete.' });
       load(); refresh();
     }, 'Delete');
   }
 
   return (
     <View>
-      <Card title="New record">
+      <Card title={'New ' + L.record}>
         <Muted>Details are encrypted with AES-256-GCM before they reach the database.</Muted>
         <Msg kind={msg && msg.kind} text={msg && msg.text} />
-        <Field label="Title" value={title} onChangeText={setTitle} maxLength={150} testID="rec-title" />
-        <Field label="Details (stored encrypted)" value={details} onChangeText={setDetails} multiline maxLength={5000} testID="rec-details" />
-        <Button title="Save record" onPress={save} busy={busy} disabled={!title.trim() || !details.trim()} testID="rec-save" />
+        <Field label={L.titleLabel} value={title} onChangeText={setTitle} maxLength={150} testID="rec-title" />
+        <Field label={L.detailsLabel} value={details} onChangeText={setDetails} multiline maxLength={5000} testID="rec-details" />
+        <Button title={'Save ' + L.record} onPress={save} busy={busy} disabled={!title.trim() || !details.trim()} testID="rec-save" />
       </Card>
-      <Card title="Records you may see">
-        {list === null ? <Muted>Loading...</Muted> : list.length === 0 ? <Muted>No records yet.</Muted> : list.map((rec) => (
+      <Card title={L.Records + ' you may see'}>
+        {list === null ? <Muted>Loading...</Muted> : list.length === 0 ? <Muted>{'No ' + L.records + ' yet.'}</Muted> : list.map((rec) => (
           <View key={rec.id} style={{ borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 12, marginBottom: 10 }}>
             <Text style={{ fontWeight: '700', color: C.ink, fontSize: 15 }}>{rec.title}</Text>
             <Muted>{rec.fullName + ' - ' + fmt(rec.createdAt)}</Muted>
@@ -135,14 +130,14 @@ export function Users({ me, refresh }) {
           <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" testID="u-email" />
           <Text style={{ fontWeight: '600', fontSize: 13, color: C.ink, marginTop: 12, marginBottom: 8 }}>Role</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {a.creatableRoles.map((r) => <Chip key={r} label={r} active={role === r} onPress={() => setRole(r)} />)}
+            {a.creatableRoles.map((r) => <Chip key={r} label={roleName(r)} active={role === r} onPress={() => setRole(r)} />)}
           </View>
           <PasswordField label="Temporary password" value={password} onChangeText={setPassword} testID="u-pass" />
           <Button title="Create account" onPress={add} busy={busy} disabled={!fullName || !username || !email || !password} testID="u-create" />
         </Card>
       ) : null}
       {a.canDeleteInputters ? (
-        <Card title={me.user.role === 'administrator' ? 'All users' : 'Inputters'}>
+        <Card title={me.user.role === 'administrator' ? 'All users' : L.rolePlurals.inputter}>
           {users === null ? <Muted>Loading...</Muted> : users.map((u) => (
             <View key={u.id} style={{ borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 12, marginBottom: 10 }}>
               <Text style={{ fontWeight: '700', color: C.ink }}>{u.full_name}</Text>
@@ -152,7 +147,7 @@ export function Users({ me, refresh }) {
                 <Muted style={{ marginLeft: 10 }}>{'2FA: ' + (u.totp_enabled ? 'On' : 'Not yet') + '  -  ' + (u.is_locked ? 'Locked' : 'Active')}</Muted>
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
-                {u.role === 'inputter' ? <Button small kind="danger" title="Delete" onPress={() => act('delete', u, 'Delete this inputter?')} /> : null}
+                {u.role === 'inputter' ? <Button small kind="danger" title="Delete" onPress={() => act('delete', u, 'Delete this ' + roleName('inputter').toLowerCase() + '?')} /> : null}
                 {a.canRecover && u.is_locked ? <Button small kind="ghost" title="Unlock" onPress={() => act('unlock', u)} /> : null}
                 {a.canRecover ? <Button small kind="ghost" title="Reset 2FA" onPress={() => act('reset2fa', u, 'Reset 2FA for this user?')} /> : null}
               </View>
@@ -241,7 +236,7 @@ export function Backup({ me, refresh }) {
 
   function reset() {
     setFormMsg(null);
-    confirmAction('Delete ALL records now?', 'A safety backup is taken first. Accounts and settings are not changed.', async () => {
+    confirmAction('Delete ALL ' + L.records + ' now?', 'A safety backup is taken first. Accounts and settings are not changed.', async () => {
       const r = await api('/api/backups', 'POST', { action: 'reset', confirm: confirmWord, password: resetPassword });
       if (!r.ok) return setFormMsg({ kind: 'error', text: r.data.error || 'Reset failed.' });
       setConfirmWord(''); setResetPassword('');
@@ -254,12 +249,12 @@ export function Backup({ me, refresh }) {
     <View>
       <Msg kind={msg && msg.kind} text={msg && msg.text} />
       <Card title="Back up now">
-        <Muted>Saves an encrypted copy (AES-256-GCM) of the users and records. The newest 20 backups are kept.</Muted>
+        <Muted>{'Saves an encrypted copy (AES-256-GCM) of the users and ' + L.records + '. The newest 20 backups are kept.'}</Muted>
         <Button title="Back up now" onPress={backupNow} busy={busy} testID="backup-now" />
       </Card>
       {restoring ? (
         <Card title={'Restore backup #' + restoring.id + '?'} danger>
-          <Muted>The current records are replaced by the records in this backup ({restoring.records}). A safety backup is taken first. Accounts, passwords, 2FA and settings are not changed.</Muted>
+          <Muted>{'The current ' + L.records + ' are replaced by the ' + L.records + ' in this backup (' + restoring.records + ').'} A safety backup is taken first. Accounts, passwords, 2FA and settings are not changed.</Muted>
           <Msg kind={formMsg && formMsg.kind} text={formMsg && formMsg.text} />
           <PasswordField label="Your password (to confirm)" value={restorePassword} onChangeText={setRestorePassword} testID="restore-pass" />
           <Button kind="danger" title={'Restore backup #' + restoring.id} onPress={restore} disabled={!restorePassword} testID="restore-go" />
@@ -271,18 +266,18 @@ export function Backup({ me, refresh }) {
           <View key={b.id} style={{ borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 12, marginBottom: 10 }}>
             <Text style={{ fontWeight: '700', color: C.ink }}>{'#' + b.id + '  -  ' + b.kind}</Text>
             <Muted>{fmt(b.createdAt) + '  -  by ' + (b.by || '-')}</Muted>
-            <Muted>{b.users + ' users, ' + b.records + ' records'}</Muted>
+            <Muted>{b.users + ' users, ' + b.records + ' ' + L.records}</Muted>
             {a.canRestoreOrReset ? <View style={{ flexDirection: 'row', marginTop: 8 }}><Button small kind="ghost" title="Restore" onPress={() => { setRestoring(b); setFormMsg(null); }} /></View> : null}
           </View>
         ))}
       </Card>
       {a.canRestoreOrReset ? (
         <Card title="Reset (Administrator only)" danger>
-          <Muted>Empties all staff records so you can start again. Accounts, roles, passwords, two-factor devices and every setting stay exactly as they are. A safety backup is saved first, so Restore can bring the records back.</Muted>
+          <Muted>{'Empties all ' + L.records + ' so you can start again.'}  Accounts, roles, passwords, two-factor devices and every setting stay exactly as they are. A safety backup is saved first, so Restore can bring the {L.records} back.</Muted>
           {!restoring ? <Msg kind={formMsg && formMsg.kind} text={formMsg && formMsg.text} /> : null}
           <Field label="Type RESET in capital letters" value={confirmWord} onChangeText={setConfirmWord} autoCapitalize="characters" testID="reset-word" />
           <PasswordField label="Your password" value={resetPassword} onChangeText={setResetPassword} testID="reset-pass" />
-          <Button kind="danger" title="Reset records (keep settings)" onPress={reset} disabled={!confirmWord || !resetPassword} testID="reset-go" />
+          <Button kind="danger" title={'Reset ' + L.records + ' (keep settings)'} onPress={reset} disabled={!confirmWord || !resetPassword} testID="reset-go" />
         </Card>
       ) : null}
     </View>
@@ -326,7 +321,7 @@ export function Credentials() {
       <Card title="What the database holds for every user">
         {users === null ? <Muted>Loading...</Muted> : users.map((u) => (
           <View key={u.username} style={{ borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 12, marginBottom: 10 }}>
-            <Text style={{ fontWeight: '700', color: C.ink, marginBottom: 6 }}>{u.username + '  (' + u.role + ')'}</Text>
+            <Text style={{ fontWeight: '700', color: C.ink, marginBottom: 6 }}>{u.username + '  (' + roleName(u.role) + ')'}</Text>
             <Step label="Salt (random, per user)" value={u.salt} />
             <Step label="Pepper (same for all)" value={u.pepper || '(hidden)'} />
             <Step label="Salt + pepper" value={u.salt_pepper || '(hidden)'} />

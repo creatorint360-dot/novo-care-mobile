@@ -5,7 +5,7 @@ import { ActivityIndicator, AppState, KeyboardAvoidingView, Linking, Modal, Plat
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, forgetTokens, hasSavedSession, setSessionEndedHandler } from './src/api';
-import { Body, Button, C, Card, Field, Msg, Muted, PasswordField } from './src/ui';
+import { Body, BrandMark, Button, C, Card, Field, Hero, Msg, Muted, PasswordField, RoleTag } from './src/ui';
 import { Audit, Backup, ChangePassword, Credentials, Dashboard, Records, Users } from './src/screens';
 
 // ------------------------------------------------------------------ step 1: username + password
@@ -145,12 +145,7 @@ function Main() {
       <View style={shellStyle}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 22, paddingBottom: 40 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 22 }}>
-              <View style={{ width: 38, height: 38, borderRadius: 11, backgroundColor: C.violet, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: '#fff', fontWeight: '800', fontSize: 18 }}>N</Text>
-              </View>
-              <Text style={{ marginLeft: 10, fontSize: 20, fontWeight: '800', color: C.ink }}>Novo Staff</Text>
-            </View>
+            <Hero />
             {phase === 'login' ? <Login key={note} note={note} onNext={() => setPhase('twofa')} /> : null}
             {phase === 'twofa' ? <TwoFactor onDone={enterApp} onBack={(t) => backToLogin(t)} /> : null}
             <Muted style={{ marginTop: 26, textAlign: 'center' }}>Computer Security - PBIT 309 / PBSE 309</Muted>
@@ -185,15 +180,19 @@ function Main() {
   return (
     <View style={shellStyle}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.line, backgroundColor: '#fff' }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 20, fontWeight: '800', color: C.ink }} numberOfLines={1}>{titles[screen]}</Text>
-          <Muted>{me.user.fullName + ' - ' + me.user.role}</Muted>
+        <BrandMark size={34} />
+        <View style={{ flex: 1, marginLeft: 10, marginRight: 8 }}>
+          <Text style={{ fontSize: 19, fontWeight: '800', color: C.ink }} numberOfLines={1}>{titles[screen]}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+            <Muted numberOfLines={1} style={{ flexShrink: 1, marginRight: 6 }}>{me.user.fullName}</Muted>
+            <RoleTag role={me.user.role} />
+          </View>
         </View>
         <Button small kind="ghost" title="Menu" onPress={() => setMenuOpen(true)} testID="menu-open" />
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
-          {me.demoMode ? <Msg kind="info" text="Demo mode is ON: salt, pepper and their combination are visible in the database for the lecturer. Turn DEMO_MODE off after the demonstration." /> : null}
+          {me.demoMode ? <Msg kind="warn" text="Demo mode is ON: salt, pepper and their combination are visible in the database for the lecturer. Turn DEMO_MODE off after the demonstration." /> : null}
           <View key={screen}>{body}</View>
         </ScrollView>
       </KeyboardAvoidingView>

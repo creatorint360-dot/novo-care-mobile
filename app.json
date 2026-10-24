@@ -1,13 +1,14 @@
 {
   "expo": {
-    "name": "novo-staff-mobile",
+    "name": "Novo Staff",
     "slug": "novo-staff-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.novostaff.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -15,13 +16,19 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "package": "com.novostaff.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "144bb036-7c6d-453b-b20f-0ec9137053d0"
+      }
+    }
   }
 }

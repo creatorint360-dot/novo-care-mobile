@@ -1,4 +1,4 @@
-// Talks to the Novo Staff server. The app does not use cookies: the server hands out the
+// Talks to the Novo Care server. The app does not use cookies: the server hands out the
 // same signed values in two headers (X-Pending-Token, X-Session-Token) when it sees
 // "X-Client: novostaff-app". They are kept in the phone's secure storage
 // (Android Keystore / iOS Keychain) and nowhere else.

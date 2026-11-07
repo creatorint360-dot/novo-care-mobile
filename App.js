@@ -1,4 +1,4 @@
-// Novo Staff mobile app (Expo / React Native).
+// Novo Care mobile app (Expo / React Native).
 // Same accounts, same database and same rules as the website: it talks to the online server.
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, Linking, Modal, Pressable, Text, View } from 'react-native';

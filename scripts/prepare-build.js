@@ -1,6 +1,6 @@
 'use strict';
 // Gets the app ready to be built as a real, installable Android app:
-//   1. draws the Novo Staff icons (PNG) into assets/ with plain code
+//   1. draws the Novo Care icons (PNG) into assets/ with plain code
 //   2. puts the app name and package id into app.json
 //   3. adds an "preview" build that produces an .apk file in eas.json
 // Run once from the project folder:  node scripts/prepare-build.js
